@@ -196,17 +196,20 @@ function($rootScope, User, $timeout, $state, Analytics) {
       };
       step.onHide = function(){
         var ups={};
-        if (!$rootScope.stepAwarded) $rootScope.stepAwarded = {};
-        if (!$rootScope.stepAwarded[i]) {
-          $rootScope.stepAwarded[i] = true;
+        var rewardid = k + "_" + i;
+        
+        if (User.user.flags.tourRewards === undefined || !User.user.flags.tourRewards[rewardid])
+        {
           ups['stats.gp'] = User.user.stats.gp + (step.gold || 0);
           ups['stats.exp'] = User.user.stats.exp + (step.experience || 0);
+          ups['flags.tourRewards.' + rewardid] = true;
         }
+        
         if (step.final) { // -2 indicates complete
           ups['flags.tour.'+k] = -2;
-          $rootScope.stepAwarded = null;
           Analytics.track({'hitType':'event','eventCategory':'behavior','eventAction':'tutorial','eventLabel':k+'-web','eventValue':i+1,'complete':true})
         }
+        console.log('onhide', ups);
         User.set(ups);
       }
     })
@@ -236,29 +239,37 @@ function($rootScope, User, $timeout, $state, Analytics) {
           '</div>' +
           '</div>';
       },
-      storage: false
+      storage: false //window.localStorage
     });
   });
 
-  var goto = function(chapter, page, force) {
+  var goto = function(chapter, page) {
+    console.log('goto called', chapter, page);
     if (chapter == 'intro') User.set({'flags.welcomed': true});
-    if (page === -1) page = 0;
-    var curr = User.user.flags.tour[chapter];
-    if (page != curr+1 && !force) return;
-    var updates = {};updates['flags.tour.'+chapter] = page;
-    User.set(updates);
+    if (User.user.flags.tour[chapter] === -2) return;
+
+    var updates = {};
+    //updates['flags.tour.'+chapter] = page;
+    //console.log('goto doing', updates);
+    //User.set(updates);
     var chap = tour[chapter], opts = chap._options;
-    opts.steps = [];
-    _.times(page, function(p){
-      opts.steps  = opts.steps.concat(chapters[chapter][p]);
-    })
-    var end = opts.steps.length;
-    opts.steps = opts.steps.concat(chapters[chapter][page]);
+
+    //ups['flags.tour.'+k] = -2;
+    //opts.steps = [];
+  //  _.times(page, function(p){
+//      opts.steps  = opts.steps.concat(chapters[chapter][p]);
+    //})
+    //var end = opts.steps.length;
+    opts.steps = opts.steps.concat(chapters[chapter][0]);
+    console.log(chap, chap._options.steps);
+
+    chap.start();
+    return;
     chap._removeState('end');
     if (chap._inited) {
       chap.goTo(end);
     } else {
-      chap.setCurrentStep(end);
+      //chap.setCurrentStep(end);
       chap.start();
     }
   }

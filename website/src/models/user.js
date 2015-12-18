@@ -140,6 +140,7 @@ var UserSchema = new Schema({
       hall: {type: Number,        'default': -1},
       equipment: {type: Number,   'default': -1}
     },
+    tourRewards: Array,
     tutorial: {
       common: {
         habits: {type: Boolean, 'default': false},
